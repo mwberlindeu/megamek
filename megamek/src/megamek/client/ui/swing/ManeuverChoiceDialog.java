@@ -46,6 +46,9 @@ import megamek.common.MovePath;
  * @author suvarov454@sourceforge.net
  * @version $version: $
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class ManeuverChoiceDialog extends JDialog implements ActionListener {
     /**
      * 

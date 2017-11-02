@@ -53,6 +53,9 @@ import megamek.common.options.OptionsConstants;
  *
  * @author Ben
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class StartingPositionDialog extends JDialog implements ActionListener {
 
     /**

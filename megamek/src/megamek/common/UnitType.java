@@ -17,6 +17,9 @@ package megamek.common;
 /**
  * weight class limits and names
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class UnitType {
 
     public static final int MEK = 0;

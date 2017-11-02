@@ -18,6 +18,9 @@ package megamek.common;
 /**
  * weight class limits and names
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class EntityWeightClass {
 
     // BA, Mech / Vee / Generic Weights

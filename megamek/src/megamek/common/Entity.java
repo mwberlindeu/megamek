@@ -86,6 +86,9 @@ import megamek.common.weapons.other.TSEMPWeapon;
 /**
  * Entity is a master class for basically anything on the board except terrain.
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public abstract class Entity extends TurnOrdered implements Transporter,
         Targetable, RoundUpdated, PhaseUpdated, ITechnology {
     /**

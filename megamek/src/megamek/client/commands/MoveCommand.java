@@ -26,6 +26,9 @@ import megamek.common.options.OptionsConstants;
 /**
  * @author dirk
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class MoveCommand extends ClientCommand {
 
     public static final int GEAR_LAND = 0;

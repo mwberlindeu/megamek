@@ -17,6 +17,9 @@ package megamek.common;
 /**
  * This interface represents the Entity Movement Types
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public enum EntityMovementMode {
 
     NONE ("none", "building"), // Future expansion. Turrets?

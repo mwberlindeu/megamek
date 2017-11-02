@@ -20,6 +20,9 @@ import megamek.common.Coords;
 /**
  * @author dirk
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class DeployCommand extends ClientCommand {
 
     /**

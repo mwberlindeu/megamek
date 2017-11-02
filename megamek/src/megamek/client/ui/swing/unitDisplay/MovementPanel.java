@@ -12,6 +12,9 @@ import megamek.common.Entity;
  * The movement panel contains all the buttons, readouts and gizmos relating
  * to moving around on the battlefield.
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 class MovementPanel extends PicMap {
 
     /**

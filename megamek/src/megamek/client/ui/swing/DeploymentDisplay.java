@@ -54,6 +54,9 @@ public class DeploymentDisplay extends StatusBarPhaseDisplay {
     /**
      *
      */
+	
+	//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)	
+	
     private static final long serialVersionUID = -430925219438520710L;
 
     /**

@@ -27,6 +27,9 @@ import java.io.Serializable;
 /**
  * A simple class to specify a location and facing for a unit.
  */
+
+//MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
+
 public class UnitLocation implements Serializable {
     /**
      * 
