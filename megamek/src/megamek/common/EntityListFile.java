@@ -420,7 +420,7 @@ public class EntityListFile {
             output.insert(0,
                     "      The first slot in a location is at index=\"1\".");
 
-            // Tanks do wierd things with ammo.
+            // Tanks do weird things with ammo.
             if (entity instanceof Tank) {
                 output.insert(0, CommonConstants.NL);
                 output.insert(0,
