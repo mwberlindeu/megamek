@@ -30,9 +30,10 @@ import megamek.common.weapons.bayweapons.BayWeapon;
  */
 
 //MWBerlin: potentially relevant for large wet navy vessels - first priority (deployment/movement)
-//copied from dropship - not adjusted yet / copy from Tank / Submarine may also be considered
+//copied from dropship - not adjusted yet / copy from Tank / Submarine / Large Support Tank may also be considered
+//to be checked extension from SmallCraft
 
-public class Dropship extends SmallCraft {
+public class Largewetnavy extends SmallCraft {
 
     /**
      *
