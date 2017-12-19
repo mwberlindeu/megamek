@@ -30,6 +30,7 @@ import megamek.common.annotations.Nullable;
 import megamek.common.event.GameEvent;
 import megamek.common.event.GameListener;
 import megamek.common.options.GameOptions;
+import megamek.common.options.OptionsConstants;
 import megamek.common.weapons.AttackHandler;
 import megamek.server.SmokeCloud;
 import megamek.server.victory.Victory;
@@ -122,6 +123,30 @@ public interface IGame {
                 }
             }
             return null;
+        }
+        
+        /**
+         * Returns true if this phase is simultaneous.
+         *
+         * @param game  Game instance used to get game options
+         * @return
+         */
+        public boolean isPhaseSimultaneous(IGame game) {
+            switch (this) {
+                case PHASE_DEPLOYMENT:
+                    return game.getOptions().booleanOption(OptionsConstants.INIT_SIMULTANEOUS_DEPLOYMENT);
+                case PHASE_MOVEMENT:
+                    return game.getOptions().booleanOption(OptionsConstants.INIT_SIMULTANEOUS_MOVEMENT);
+                case PHASE_FIRING:
+                    return game.getOptions().booleanOption(OptionsConstants.INIT_SIMULTANEOUS_FIRING);
+                case PHASE_PHYSICAL:
+                    return game.getOptions().booleanOption(OptionsConstants.INIT_SIMULTANEOUS_PHYSICAL);
+                case PHASE_TARGETING:
+                case PHASE_OFFBOARD:
+                    return game.getOptions().booleanOption(OptionsConstants.INIT_SIMULTANEOUS_TARGETING);
+                default:
+                    return false;
+            }
         }
 
     }
@@ -469,8 +494,13 @@ public interface IGame {
 
     /**
      * Sets the current turn index
+     * 
+     * @param turnIndex
+     *            The new turn index.
+     * @param prevPlayerId
+     *            The ID of the player who triggered the turn index change.
      */
-    abstract void setTurnIndex(int turnIndex);
+    abstract void setTurnIndex(int turnIndex, int prevPlayerId);
 
     /**
      * Returns the current turn vector
@@ -903,17 +933,13 @@ public interface IGame {
     abstract int getPrevEntityNum(GameTurn turn, int start);
 
     /**
-     * Returns the number of the first deployable entity
+     * Returns the number of the first deployable entity that is valid for the specified turn
      */
-    abstract int getFirstDeployableEntityNum();
-
     abstract int getFirstDeployableEntityNum(GameTurn turn);
 
     /**
-     * Returns the number of the next deployable entity
+     * Returns the number of the next deployable entity that is valid for the specified turn
      */
-    abstract int getNextDeployableEntityNum(int entityId);
-
     abstract int getNextDeployableEntityNum(GameTurn turn, int start);
 
     /**

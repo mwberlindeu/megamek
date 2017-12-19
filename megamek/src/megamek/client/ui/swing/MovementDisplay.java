@@ -1056,6 +1056,7 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
         clientgui.getBoardView().selectEntity(null);
         clientgui.setSelectedEntityNum(Entity.NONE);
         clientgui.bv.clearMovementData();
+        clientgui.bv.clearFieldofF();
     }
 
     /**
@@ -1257,6 +1258,8 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                                 + "</b></html>"); //$NON-NLS-1$
             }
         }
+        
+        updateButtons();
     }
 
     /**
@@ -3971,7 +3974,15 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
         if (isIgnoringEvents()) {
             return;
         }
-        
+        // On simultaneous phases, each player ending their turn will generalte a turn change
+        // We want to ignore turns from other players and only listen to events we generated
+        // Except on the first turn
+        if (clientgui.getClient().getGame().isPhaseSimultaneous()
+                && (e.getPreviousPlayerId() != clientgui.getClient().getLocalPlayerNumber())
+                && (clientgui.getClient().getGame().getTurnIndex() != 0)) {
+            return;
+        }
+
         if (clientgui.getClient().getGame().getPhase() != IGame.Phase.PHASE_MOVEMENT) {
             // ignore
             return;

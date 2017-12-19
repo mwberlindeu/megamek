@@ -15,7 +15,13 @@ package megamek.common.weapons.bombs;
 
 import megamek.common.AmmoType;
 import megamek.common.BombType;
+import megamek.common.IGame;
+import megamek.common.ToHitData;
+import megamek.common.actions.WeaponAttackAction;
+import megamek.common.weapons.ASEWMissileWeaponHandler;
+import megamek.common.weapons.AttackHandler;
 import megamek.common.weapons.missiles.ThunderBoltWeapon;
+import megamek.server.Server;
 
 /**
  * @author Jay Lawson
@@ -45,7 +51,7 @@ public class ISASEWMissileWeapon extends ThunderBoltWeapon {
         this.hittable = false;
         this.bv = 0;
         this.cost = 20000;
-        this.flags = flags.or(F_MISSILE).or(F_LARGEMISSILE);
+        this.flags = flags.or(F_MISSILE).or(F_LARGEMISSILE).or(F_BOMB_WEAPON);
         this.shortAV = 0;
         this.medAV = 0;
         this.longAV = 0;
@@ -62,5 +68,11 @@ public class ISASEWMissileWeapon extends ThunderBoltWeapon {
         .setISApproximate(false, false, false, false, false)
         .setPrototypeFactions(F_LC)
         .setProductionFactions(F_LC);
+    }
+    
+    @Override
+    protected AttackHandler getCorrectHandler(ToHitData toHit,
+            WeaponAttackAction waa, IGame game, Server server) {
+        return new ASEWMissileWeaponHandler(toHit, waa, game, server);
     }
 }

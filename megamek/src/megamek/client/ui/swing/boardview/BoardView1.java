@@ -118,6 +118,7 @@ import megamek.common.Configuration;
 import megamek.common.Coords;
 import megamek.common.ECMInfo;
 import megamek.common.Entity;
+import megamek.common.EntityVisibilityUtils;
 import megamek.common.Flare;
 import megamek.common.IBoard;
 import megamek.common.IGame;
@@ -193,8 +194,8 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
     private static final int BOARD_HEX_POPUP = 4;
 
     // the dimensions of megamek's hex images
-    static final int HEX_W = HexTileset.HEX_W;
-    static final int HEX_H = HexTileset.HEX_H;
+    public static final int HEX_W = HexTileset.HEX_W;
+    public static final int HEX_H = HexTileset.HEX_H;
     private static final int HEX_WC = HEX_W - (HEX_W / 4);
     static final int HEX_ELEV = 12;
 
@@ -492,6 +493,11 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
     /** Holds the final Coords for a planned movement. Set by MovementDisplay,
      *  used to display the distance in the board tooltip. */ 
     private Coords movementTarget;
+
+    /**
+     * Flag to indicate if we should display informatin about illegal terrain in hexes.
+     */
+    boolean displayInvalidHexInfo = false;
 
 
     /**
@@ -2711,6 +2717,12 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
                     + (int) (12 * scale), font_hexnum, g);
         }
 
+        if (getDisplayInvalidHexInfo() && !hex.isValid(null)) {
+            Point hexCenter = new Point((int)(HEX_W / 2 * scale), (int)(HEX_H / 2 * scale));
+            drawCenteredText(g, Messages.getString("BoardEditor.INVALID"), hexCenter, Color.RED, false,
+                    new Font("SansSerif", Font.BOLD, 14));
+        }
+
         // write terrain level / water depth / building height
         if (scale > 0.5f) {
             int ypos = HEX_H-2;
@@ -3460,16 +3472,7 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
 
         // Create the new sprites
         Coords position = entity.getPosition();
-        boolean canSee = (localPlayer == null)
-                || !game.getOptions().booleanOption(OptionsConstants.ADVANCED_DOUBLE_BLIND)
-                || !entity.getOwner().isEnemyOf(localPlayer)
-                || entity.hasSeenEntity(localPlayer)
-                || entity.hasDetectedEntity(localPlayer);
-
-        canSee &= (localPlayer == null)
-                || !game.getOptions().booleanOption(OptionsConstants.ADVANCED_HIDDEN_UNITS)
-                || !entity.getOwner().isEnemyOf(localPlayer)
-                || !entity.isHidden();
+        boolean canSee = EntityVisibilityUtils.hasVisual(localPlayer, game, entity);
 
         if ((position != null) && canSee) {
             // Add new EntitySprite
@@ -3524,7 +3527,7 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
         }
         
         // Update C3 link, if necessary
-        if (entity.hasC3() || entity.hasC3i() || entity.hasActiveNovaCEWS()) {
+        if (entity.hasC3() || entity.hasC3i() || entity.hasActiveNovaCEWS() || entity.hasNavalC3()) {
             addC3Link(entity);
         }
 
@@ -3643,7 +3646,7 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
                 }
             }
 
-            if (entity.hasC3() || entity.hasC3i() || entity.hasActiveNovaCEWS()) {
+            if (entity.hasC3() || entity.hasC3i() || entity.hasActiveNovaCEWS() || entity.hasNavalC3()) {
                 addC3Link(entity);
             }
 
@@ -4223,6 +4226,15 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
                         && !fe.equals(e)
                         && !ComputeECM.isAffectedByECM(e, e.getPosition(),
                                 fe.getPosition())) {
+                    c3Sprites.add(new C3Sprite(this, e, fe));
+                }
+            }
+        } else if (e.hasNavalC3()) {
+            for (Entity fe : game.getEntitiesVector()) {
+                if (fe.getPosition() == null) {
+                    return;
+                }
+                if (e.onSameC3NetworkAs(fe) && !fe.equals(e)) {
                     c3Sprites.add(new C3Sprite(this, e, fe));
                 }
             }
@@ -5683,6 +5695,17 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
                 }
             }
 
+            if (displayInvalidHexInfo) {
+                StringBuffer errBuff = new StringBuffer();
+                if (!mhex.isValid(errBuff)) {
+                    txt.append(Messages.getString("BoardView1.invalidHex"));
+                    txt.append("<br>"); //$NON-NLS-1$
+                    String errors = errBuff.toString();
+                    errors = errors.replace("\n", "<br>");
+                    txt.append(errors);
+                    txt.append("<br>"); //$NON-NLS-1$
+                }
+            }
         }
         
         // Show the player(s) that may deploy here 
@@ -6600,4 +6623,11 @@ public class BoardView1 extends JPanel implements IBoardView, Scrollable,
         return hexImage;
     }
 
+    public void setDisplayInvalidHexInfo(boolean v) {
+        displayInvalidHexInfo = v;
+    }
+
+    public boolean getDisplayInvalidHexInfo() {
+        return displayInvalidHexInfo;
+    }
 }

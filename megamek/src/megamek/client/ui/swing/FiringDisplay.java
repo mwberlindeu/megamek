@@ -2169,7 +2169,15 @@ public class FiringDisplay extends StatusBarPhaseDisplay implements
         if (isIgnoringEvents()) {
             return;
         }
-
+        // On simultaneous phases, each player ending their turn will generalte a turn change
+        // We want to ignore turns from other players and only listen to events we generated
+        // Except on the first turn
+        if (clientgui.getClient().getGame().isPhaseSimultaneous()
+                && (e.getPreviousPlayerId() != clientgui.getClient().getLocalPlayerNumber())
+                && (clientgui.getClient().getGame().getTurnIndex() != 0)) {
+            return;
+        }
+        
         if (clientgui.getClient().getGame().getPhase() == IGame.Phase.PHASE_FIRING) {
             if (clientgui.getClient().isMyTurn()) {
                 if (cen == Entity.NONE) {
@@ -2520,10 +2528,10 @@ public class FiringDisplay extends StatusBarPhaseDisplay implements
                     && (munitionType == AmmoType.M_FLARE)) {
                 return new HexTarget(pos, game.getBoard(),
                         Targetable.TYPE_FLARE_DELIVER);
-            // Certain mek mortar types should target hexes
-            } else if ((aType.getAmmoType() == AmmoType.T_MEK_MORTAR)
+            // Certain mek mortar types and LRMs should target hexes
+            } else if (((aType.getAmmoType() == AmmoType.T_MEK_MORTAR)
                     || (aType.getAmmoType() == AmmoType.T_LRM)
-                    || (aType.getAmmoType() == AmmoType.T_LRM_IMP)
+                    || (aType.getAmmoType() == AmmoType.T_LRM_IMP))
                     && ((munitionType == AmmoType.M_AIRBURST) 
                             || (munitionType == AmmoType.M_SMOKE_WARHEAD))) {
                 return new HexTarget(pos, game.getBoard(),

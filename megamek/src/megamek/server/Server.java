@@ -60,6 +60,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -213,8 +214,8 @@ import megamek.common.actions.WeaponAttackAction;
 import megamek.common.containers.PlayerIDandList;
 import megamek.common.event.GameListener;
 import megamek.common.event.GameVictoryEvent;
-import megamek.common.logging.LogLevel;
 import megamek.common.logging.DefaultMmLogger;
+import megamek.common.logging.LogLevel;
 import megamek.common.logging.MMLogger;
 import megamek.common.net.ConnectionFactory;
 import megamek.common.net.ConnectionListenerAdapter;
@@ -1177,7 +1178,7 @@ public class Server implements Runnable {
             }
             if (game.phaseHasTurns(game.getPhase())) {
                 send(connId, createTurnVectorPacket());
-                send(connId, createTurnIndexPacket());
+                send(connId, createTurnIndexPacket(connId));
             }
 
             send(connId, createArtilleryPacket(player));
@@ -1881,6 +1882,37 @@ public class Server implements Runnable {
         game.clearIlluminatedPositions();
         send(new Packet(Packet.COMMAND_CLEAR_ILLUM_HEXES));
     }
+    
+    /*
+     *  Called during the end phase. Checks each entity for ASEW effects counters and decrements them by 1 if > 0
+     */
+    
+    public void decrementASEWTurns() {
+        for (Iterator<Entity> e = game.getEntities(); e.hasNext(); ) {
+            final Entity entity = e.next();
+            // Decrement ASEW effects
+            if ((entity.getEntityType() & Entity.ETYPE_DROPSHIP) == Entity.ETYPE_DROPSHIP) {
+                Dropship d = (Dropship) entity;
+                for (int loc = 0; loc < d.locations(); loc++) {
+                    if (d.getASEWAffected(loc) > 0) {
+                        d.setASEWAffected(loc, d.getASEWAffected(loc) - 1);
+                    } 
+                }
+            } else if ((entity.getEntityType() & Entity.ETYPE_JUMPSHIP) != 0) {
+                Jumpship j = (Jumpship) entity;
+                for (int loc = 0; loc < j.locations(); loc++) {
+                    if (j.getASEWAffected(loc) > 0) {
+                        j.setASEWAffected(loc, j.getASEWAffected(loc) - 1);
+                    } 
+                }
+            } else {
+                if (entity.getASEWAffected() > 0) {
+                    entity.setASEWAffected(entity.getASEWAffected() - 1);
+                }
+            }
+        }        
+    }    
+    
 
     /**
      * are we currently in a reporting phase
@@ -2419,9 +2451,9 @@ public class Server implements Runnable {
 
         // move along
         if (outOfOrder) {
-            send(createTurnIndexPacket());
+            send(createTurnIndexPacket(entityUsed.getOwnerId()));
         } else {
-            changeToNextTurn();
+            changeToNextTurn(entityUsed.getOwnerId());
         }
     }
 
@@ -2840,7 +2872,7 @@ public class Server implements Runnable {
             case PHASE_PHYSICAL:
             case PHASE_TARGETING:
             case PHASE_OFFBOARD:
-                changeToNextTurn();
+                changeToNextTurn(-1);
                 if (game.getOptions().booleanOption(OptionsConstants.BASE_PARANOID_AUTOSAVE)) {
                     autoSave();
                 }
@@ -2866,11 +2898,7 @@ public class Server implements Runnable {
     public void checkEntityExchange() {
         for (Iterator<Entity> entities = game.getEntities(); entities.hasNext();) {
             Entity entity = entities.next();
-            // apply bombs and santa annas
-            if (game.getOptions().booleanOption(OptionsConstants.ADVAERORULES_AT2_NUKES)
-                    && ((entity instanceof Dropship) || (entity instanceof Jumpship))) {
-                entity.applySantaAnna();
-            }
+            // apply bombs
             if (entity.isBomber()) {
                 ((IBomber)entity).applyBombs();
             }
@@ -3212,6 +3240,9 @@ public class Server implements Runnable {
                         changePhase(IGame.Phase.PHASE_INITIATIVE);
                     }
                 }
+                // Decrement the ASEWAffected counter
+                decrementASEWTurns();    
+                
                 break;
             case PHASE_END_REPORT:
                 if (changePlayersTeam) {
@@ -3378,7 +3409,7 @@ public class Server implements Runnable {
                 game.swapTurnOrder(currentturnindex, nextturnid);
                 // update the turn packages for all players.
                 send(createTurnVectorPacket());
-                send(createTurnIndexPacket());
+                send(createTurnIndexPacket(connid));
             } else {
                 // if nothing changed return without doing anything
                 return;
@@ -3392,7 +3423,7 @@ public class Server implements Runnable {
      * current phase. If the player whose turn it is next is not connected, we
      * allow the other players to skip that player.
      */
-    private void changeToNextTurn() {
+    private void changeToNextTurn(int prevPlayerId) {
         // if there aren't any more turns, end the phase
         if (!game.hasMoreTurns()) {
             endCurrentPhase();
@@ -3409,7 +3440,11 @@ public class Server implements Runnable {
             return;
         }
 
-        send(createTurnIndexPacket());
+        if (prevPlayerId != -1) {
+            send(createTurnIndexPacket(prevPlayerId));
+        } else {
+            send(createTurnIndexPacket(player.getId()));
+        }
 
         if ((null != player) && player.isGhost()) {
             sendGhostSkipMessage(player);
@@ -5160,7 +5195,13 @@ public class Server implements Runnable {
             turn = game.getTurnForPlayer(connId);
         }
         if ((turn == null) || !turn.isValid(connId, entity, game)) {
-            logError(METHOD_NAME, "Server got invalid movement packet");
+            String msg = "error: server got invalid movement packet from " + "connection " + connId;
+            if (entity != null) {
+                msg += ", Entity: " + entity.getShortName();
+            } else {
+                msg += ", Entity was null!";
+            }
+            logError(METHOD_NAME, msg);
             return;
         }
 
@@ -8348,7 +8389,7 @@ public class Server implements Runnable {
                             skidDirection = lastPos.direction(curPos);
                             start = curPos;
                         } else {
-                            elev = prevStep.getElevation();
+                            elev = (null == prevStep)? curElevation : prevStep.getElevation();
                             // maximum distance is hexes moved / 2
                             sideslipDistance = Math.min(moF, distance / 2);
                             skidDirection = prevFacing;
@@ -8363,7 +8404,7 @@ public class Server implements Runnable {
                             addReport(r);
 
                             if (processSkid(entity, start, elev, skidDirection,
-                                    sideslipDistance, prevStep,
+                                    sideslipDistance, (null == prevStep)? step : prevStep,
                                     lastStepMoveType)) {
                                 return;
                             }
@@ -8816,6 +8857,9 @@ public class Server implements Runnable {
                 }
                 if (entity.getPartialRepairs().booleanOption("aero_collar_crit")) {
                 	rollTarget.addModifier(2, "misrepaired docking collar");
+                }
+                if (isDS && (((Dropship)entity).getCollarType() == Dropship.COLLAR_PROTOTYPE)) {
+                    rollTarget.addModifier(2, "prototype kf-boom");
                 }
                 int ctrlroll = Compute.d6(2);
                 if (isDS) {
@@ -13214,7 +13258,7 @@ public class Server implements Runnable {
             }
             logError(METHOD_NAME, msg);
             send(connId, createTurnVectorPacket());
-            send(connId, createTurnIndexPacket());
+            send(connId, createTurnIndexPacket(turn.getPlayerNum()));
             return;
         }
 
@@ -13270,7 +13314,7 @@ public class Server implements Runnable {
             }
             logError(METHOD_NAME, msg);
             send(connId, createTurnVectorPacket());
-            send(connId, createTurnIndexPacket());
+            send(connId, createTurnIndexPacket(connId));
             return;
         }
 
@@ -13586,7 +13630,7 @@ public class Server implements Runnable {
             }
             logError(METHOD_NAME, msg);
             send(connId, createTurnVectorPacket());
-            send(connId, createTurnIndexPacket());
+            send(connId, createTurnIndexPacket(turn.getPlayerNum()));
             return;
         }
 
@@ -26120,50 +26164,7 @@ public class Server implements Runnable {
                 aero.setRightThrustHits(aero.getRightThrustHits() + 1);
                 break;
             case Aero.CRIT_CARGO:
-                // cargo hit
-                // First what percentage of the cargo did the hit destroy?
-                double percentDestroyed = 0.0;
-                double mult = 2.0;
-                if (aero.isLargeCraft() && aero.isClan()
-                    && game.getOptions().booleanOption(OptionsConstants.ADVAERORULES_STRATOPS_HARJEL)) {
-                    mult = 4.0;
-                }
-                if (damageCaused > 0) {
-                    percentDestroyed = Math.min(
-                            damageCaused / (mult * aero.getSI()), 1.0);
-                }
-                // did it hit cargo or units
-                int roll = Compute.d6(1);
-                if (roll < 4) {
-                    // cargo was hit
-                    // just report; no game effect
-                    r = new Report(9165);
-                    r.subject = aero.getId();
-                    r.add((int) (percentDestroyed * 100));
-                    reports.add(r);
-                } else {
-                    // units were hit
-                    // get a list of units
-                    Vector<Entity> passengers = aero.getBayLoadedUnits();
-                    int unitsDestroyed = (int) Math.ceil(percentDestroyed
-                                                         * passengers.size());
-                    r = new Report(9166);
-                    r.subject = aero.getId();
-                    r.add(unitsDestroyed);
-                    reports.add(r);
-                    while (unitsDestroyed > 0) {
-                        // redraw loaded units to make sure I don't get ones
-                        // already destroyed
-                        List<Entity> units = aero.getLoadedUnits();
-                        if (units.size() > 0) {
-                            Entity target = units.get(Compute.randomInt(units
-                                                                                .size()));
-                            reports.addAll(destroyEntity(target, "cargo damage",
-                                                       false, false));
-                        }
-                        unitsDestroyed--;
-                    }
-                }
+                applyCargoCritical(aero, damageCaused, reports);
                 break;
             case Aero.CRIT_DOOR:
                 // door hit
@@ -26190,7 +26191,7 @@ public class Server implements Runnable {
                     reports.add(r);
                 }
                 if (aero instanceof Jumpship) {
-                    // damage the docking collar
+                    // damage a random docking collar
                     if (aero.damageDockCollar()) {
                         r = new Report(9176);
                         r.subject = aero.getId();
@@ -26205,12 +26206,12 @@ public class Server implements Runnable {
             case Aero.CRIT_KF_BOOM:
                 // KF boom hit
                 // no real effect yet
-            	if (aero instanceof Dropship) {
-            		((Dropship)aero).setDamageKFBoom(true);
-                r = new Report(9180);
-                r.subject = aero.getId();
-                reports.add(r);
-            	}
+                if (aero instanceof Dropship) {
+                    ((Dropship)aero).setDamageKFBoom(true);
+                    r = new Report(9180);
+                    r.subject = aero.getId();
+                    reports.add(r);
+                }
                 break;
             case Aero.CRIT_CIC:
                 if (js == null) {
@@ -26250,6 +26251,83 @@ public class Server implements Runnable {
                 break;
         }
         return reports;
+    }
+
+    /**
+     * Selects random undestroyed bay and applies damage, destroying loaded units where applicable.
+     * 
+     * @param aero           The unit that received the cargo critical.
+     * @param damageCaused   The amount of damage applied by the hit that resulted in the cargo critical.
+     * @param reports        Used to return any report generated while applying the critical.
+     */
+    private void applyCargoCritical(Aero aero, int damageCaused, Vector<Report> reports) {
+        Report r;
+        // cargo hit
+        // First what percentage of the cargo did the hit destroy?
+        double percentDestroyed = 0.0;
+        double mult = 2.0;
+        if (aero.isLargeCraft() && aero.isClan()
+            && game.getOptions().booleanOption(OptionsConstants.ADVAERORULES_STRATOPS_HARJEL)) {
+            mult = 4.0;
+        }
+        if (damageCaused > 0) {
+            percentDestroyed = Math.min(
+                    damageCaused / (mult * aero.getSI()), 1.0);
+        }
+        List<Bay> bays = null;
+        double destroyed = 0;
+        // did it hit cargo or units
+        int roll = Compute.d6(1);
+        if (roll < 4) {
+            bays = aero.getTransportBays().stream()
+                    .filter(Bay::isCargo).collect(Collectors.toList());
+        } else {
+            bays = aero.getTransportBays().stream()
+                    .filter(b -> !b.isCargo() && !b.isQuarters()).collect(Collectors.toList());
+        }
+        Bay hitBay = null;
+        while ((null == hitBay) && !bays.isEmpty()) {
+            hitBay = bays.remove(Compute.randomInt(bays.size()));
+            if (hitBay.getBayDamage() < hitBay.getCapacity()) {
+                if (hitBay.isCargo()) {
+                    destroyed = (hitBay.getCapacity() * percentDestroyed * 2.0) / 2.0;
+                } else {
+                    destroyed = Math.ceil(hitBay.getCapacity() * percentDestroyed);
+                }
+            } else {
+                hitBay = null;
+            }
+        }
+        if (null != hitBay) {
+            destroyed = Math.min(destroyed, hitBay.getCapacity() - hitBay.getBayDamage());
+            if (hitBay.isCargo()) {
+                r = new Report(9165);
+            } else {
+                r = new Report(9166);
+            }
+            r.subject = aero.getId();
+            r.add(hitBay.getBayNumber());
+            if (destroyed == (int) destroyed) {
+                r.add((int) destroyed); 
+            } else {
+                r.add(String.valueOf(Math.ceil(destroyed * 2.0) / 2.0));
+            }
+            reports.add(r);
+            if (!hitBay.isCargo()) {
+                List<Entity> units = new ArrayList<>(hitBay.getLoadedUnits());
+                while ((destroyed > 0) && !units.isEmpty()) {
+                    Entity target = units.remove(Compute.randomInt(units.size()));
+                    reports.addAll(destroyEntity(target, "cargo damage",
+                            false, false));
+                    destroyed--;
+                }
+            }
+        } else {
+            r = new Report(9167);
+            r.subject = aero.getId();
+            r.choose(roll < 4); // cargo or transport
+            reports.add(r);
+        }
     }
 
     /**
@@ -30299,11 +30377,11 @@ public class Server implements Runnable {
 
             game.addEntity(entity);
 
-            // Now we relink C3/C3i to our guys! Yes, this is hackish... but, we
+            // Now we relink C3/NC3/C3i to our guys! Yes, this is hackish... but, we
             // do
             // what we must.
             // Its just too bad we have to loop over the entire entities array..
-            if (entity.hasC3() || entity.hasC3i()) {
+            if (entity.hasC3() || entity.hasC3i() || entity.hasNavalC3()) {
                 boolean C3iSet = false;
 
                 for (Entity e : game.getEntitiesVector()) {
@@ -30335,7 +30413,7 @@ public class Server implements Runnable {
                         }
                     }
 
-                    // C3i Checks// C3i Checks
+                    // C3i Checks
                     if (entity.hasC3i() && (C3iSet == false)) {
                         entity.setC3NetIdSelf();
                         int pos = 0;
@@ -30344,6 +30422,25 @@ public class Server implements Runnable {
                             if ((entity.getC3iNextUUIDAsString(pos) != null)
                                 && (e.getC3UUIDAsString() != null)
                                 && entity.getC3iNextUUIDAsString(pos)
+                                         .equals(e.getC3UUIDAsString())) {
+                                entity.setC3NetId(e);
+                                C3iSet = true;
+                                break;
+                            }
+
+                            pos++;
+                        }
+                    }
+                    
+                    // NC3 Checks
+                    if (entity.hasNavalC3() && (C3iSet == false)) {
+                        entity.setC3NetIdSelf();
+                        int pos = 0;
+                        while (pos < Entity.MAX_C3i_NODES) {
+                            // We've found a network, join it.
+                            if ((entity.getNC3NextUUIDAsString(pos) != null)
+                                && (e.getC3UUIDAsString() != null)
+                                && entity.getNC3NextUUIDAsString(pos)
                                          .equals(e.getC3UUIDAsString())) {
                                 entity.setC3NetId(e);
                                 C3iSet = true;
@@ -30808,20 +30905,23 @@ public class Server implements Runnable {
                     // if a unit is removed during deployment just keep going
                     // without adjusting the turn vector.
                     game.removeTurnFor(entity);
+                    game.removeEntity(entityId,
+                            IEntityRemovalConditions.REMOVE_NEVER_JOINED);
                 }
-                game.removeEntity(entityId,
-                        IEntityRemovalConditions.REMOVE_NEVER_JOINED);
-
             }
         }
-        send(createRemoveEntityPacket(ids,
-                IEntityRemovalConditions.REMOVE_NEVER_JOINED));
+        
+        // during deployment this absolutely must be called before game.removeEntity(), otherwise the game hangs
+        // when a unit is removed. Cause unknown. 
+        send(createRemoveEntityPacket(ids, IEntityRemovalConditions.REMOVE_NEVER_JOINED));
 
         // Prevents deployment hanging. Only do this during deployment.
         if (game.getPhase() == IGame.Phase.PHASE_DEPLOYMENT) {
             for (Integer entityId : ids) {
                 final Entity entity = game.getEntity(entityId);
                 endCurrentTurn(entity);
+                game.removeEntity(entityId,
+                        IEntityRemovalConditions.REMOVE_NEVER_JOINED);
             }
         }
     }
@@ -31037,8 +31137,11 @@ public class Server implements Runnable {
     /**
      * Creates a packet containing the current turn index
      */
-    private Packet createTurnIndexPacket() {
-        return new Packet(Packet.COMMAND_TURN, new Integer(game.getTurnIndex()));
+    private Packet createTurnIndexPacket(int playerId) {
+        final Object[] data = new Object[3];
+        data[0] = new Integer(game.getTurnIndex());
+        data[1] = playerId;
+        return new Packet(Packet.COMMAND_TURN, data);
     }
 
     /**
@@ -31552,6 +31655,10 @@ public class Server implements Runnable {
     private static final String INVADER_ZIM_CALL = "What does the G stand for?";
 
     private static final String INVADER_ZIM_RESPONSE = "I dont know.";
+    
+    private static final String WARGAMES_CALL = "Shall we play a game?";
+    
+    private static final String WARGAMES_RESPONSE = "Let's play global thermonuclear war.";
 
     /**
      * Process a packet from a connection.
@@ -31629,6 +31736,8 @@ public class Server implements Runnable {
                     sendServerChat(STAR_WARS_RESPONSE);
                 } else if (INVADER_ZIM_CALL.equalsIgnoreCase(chat)) {
                     sendServerChat(INVADER_ZIM_RESPONSE);
+                } else if (WARGAMES_CALL.equalsIgnoreCase(chat)) {
+                    sendServerChat(WARGAMES_RESPONSE);
                 }
                 break;
             case Packet.COMMAND_BLDG_EXPLODE:
@@ -33427,7 +33536,7 @@ public class Server implements Runnable {
 
         // Clear the list of pending units and move to the next turn.
         game.resetActions();
-        changeToNextTurn();
+        changeToNextTurn(connId);
     }
 
     /**

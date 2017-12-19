@@ -26,10 +26,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.StringJoiner;
 
 import megamek.client.ui.Messages;
 import megamek.common.options.IOption;
+import megamek.common.options.IOptionGroup;
 import megamek.common.options.PilotOptions;
+import megamek.common.options.Quirks;
 import megamek.common.weapons.bayweapons.BayWeapon;
 
 /**
@@ -364,19 +367,17 @@ public class MechView {
         
         //Display Strategic Fuel Use for Small Craft and up
         if (isSmallCraft) {
-        	sBasic.append("<br><br><b>Strategic Fuel Use</b>" + "<br>Tons per Burn Day: "
-        					+ ((SmallCraft) entity).getStrategicFuelUse());
-        } else if (isDropship) {
-        	sBasic.append("<br><br><b>Strategic Fuel Use</b>" + "<br>Tons per Burn Day: "
-        					+ ((Dropship) entity).getStrategicFuelUse());
+            sBasic.append(String.format("<br/><br/><b>Strategic Fuel Use</b><br>\nTons per Burn Day: %2.2f",
+                    ((SmallCraft) entity).getStrategicFuelUse()));
         } else if (isJumpship) {
-        	sBasic.append("<br><br><b>Strategic Fuel Use</b>" + "<br>Tons per Burn Day: "
-        					+ ((Jumpship) entity).getStrategicFuelUse());
-        } else if (isWarship) {
-        	sBasic.append("<br><br><b>Strategic Fuel Use</b>" + "<br>Tons per Burn Day: "
-        					+ ((Warship) entity).getStrategicFuelUse());
+            sBasic.append(String.format("<br/><br/><b>Strategic Fuel Use</b><br>\nTons per Burn Day: %2.2f",
+                    ((Jumpship) entity).getStrategicFuelUse()));
         }
         
+        if (isDropship && ((Dropship) entity).isPrimitive()) {
+            sBasic.append(Messages.getString("MechView.DropshipCollar") //$NON-NLS-1$
+                    + Dropship.getCollarName(((Dropship)entity).getCollarType())); //$NON-NLS-1$
+        }
 
         sBasic.append("<br>"); //$NON-NLS-1$
         if (!isGunEmplacement) {
@@ -387,6 +388,26 @@ public class MechView {
             } else {
                 sBasic.append(getInternalAndArmor());
             }
+        }
+        
+        StringJoiner quirksList = new StringJoiner("<br/>\n");
+        Quirks quirks = entity.getQuirks();
+        for (Enumeration<IOptionGroup> optionGroups = quirks.getGroups(); optionGroups.hasMoreElements();) {
+            IOptionGroup group = optionGroups.nextElement();
+            if (quirks.count(group.getKey()) > 0) {
+                for (Enumeration<IOption> options = group.getOptions(); options.hasMoreElements();) {
+                    IOption option = options.nextElement();
+                    if (option != null && option.booleanValue()) {
+                        quirksList.add(option.getDisplayableNameWithValue());
+                    }
+                }
+            }
+        }
+        if (quirksList.length() > 0) {
+            sFluff.append("<b>") //$NON-NLS-1$
+                .append(Messages.getString("MechView.Quirks")) //$NON-NLS-1$
+                .append("</b> <br/>\n") //$NON-NLS-1$
+                .append(quirksList.toString());
         }
         
         if (entity.getFluff().getOverview() != "") {
@@ -874,6 +895,10 @@ public class MechView {
                     && mounted.getLinkedBy().isOneShot()){
                 continue;
             }
+            // Ignore bay ammo bins for unused munition types
+            if (mounted.getAmmoCapacity() == 0) {
+                continue;
+            }
             if (mounted.isDestroyed()) {
                 sAmmo.append("<tr bgcolor='red'>");
             } else if (mounted.getUsableShotsLeft() < 1) {
@@ -984,6 +1009,33 @@ public class MechView {
         if ((capacity != null) && (capacity.length() > 0)) {
             sMisc.append("<br><b>").append(Messages.getString("MechView.CarryingCapacity")).append("</b><br>") //$NON-NLS-1$
                     .append(capacity).append("<br>"); //$NON-NLS-1$
+        }
+        
+        if (isSmallCraft || isJumpship) {
+            Aero a = (Aero)entity;
+            sMisc.append("<br><b>").append(Messages.getString("MechView.Crew")).append("</b><br/>\n"); //$NON-NLS-1$  $NON-NLS-2$ $NON-NLS-3$
+            sMisc.append("<table>\n"); //$NON-NLS-1$
+            sMisc.append("<tr><td>").append(Messages.getString("MechView.Officers")) //$NON-NLS-1$  $NON-NLS-2$
+            .append("</td><td>").append(a.getNOfficers()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            sMisc.append("<tr><td>").append(Messages.getString("MechView.Enlisted")) //$NON-NLS-1$  $NON-NLS-2$
+                .append("</td><td>").append(Math.max(a.getNCrew() //$NON-NLS-1$
+                        - a.getBayPersonnel() - a.getNGunners() - a.getNOfficers(), 0)).append("</td></tr>\n"); //$NON-NLS-1$
+            sMisc.append("<tr><td>").append(Messages.getString("MechView.Gunners")) //$NON-NLS-1$  $NON-NLS-2$
+                .append("</td><td>").append(a.getNGunners()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            sMisc.append("<tr><td>").append(Messages.getString("MechView.BayPersonnel")) //$NON-NLS-1$  $NON-NLS-2$
+                .append("</td><td>").append(a.getBayPersonnel()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            if (a.getNPassenger() > 0) {
+                sMisc.append("<tr><td>").append(Messages.getString("MechView.Passengers")) //$NON-NLS-1$  $NON-NLS-2$
+                    .append("</td><td>").append(a.getNPassenger()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            }
+            if (a.getNMarines() > 0) {
+                sMisc.append("<tr><td>").append(Messages.getString("MechView.Marines")) //$NON-NLS-1$  $NON-NLS-2$
+                    .append("</td><td>").append(a.getNMarines()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            }
+            if (a.getNBattleArmor() > 0) {
+                sMisc.append("<tr><td>").append(Messages.getString("MechView.BAMarines")) //$NON-NLS-1$  $NON-NLS-2$
+                    .append("</td><td>").append(a.getNBattleArmor()).append("</td></tr>\n"); //$NON-NLS-1$  $NON-NLS-2$
+            }
         }
         return sMisc.toString();
     }
