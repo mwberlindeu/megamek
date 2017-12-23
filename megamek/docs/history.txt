@@ -1,5 +1,19 @@
 ﻿VERSION HISTORY:
 ----------------
+v0.43.7-git 
+
+v0.43.6 (2017-12-22 10:00 UTC)
++ Bug: Weight issues with BA LRM5 and Ammo.
++ Account for Clan CASE in unit cost calculations.
++ Fixes for Princess aircraft refusing to engage ground targets, being stuck on the edge of the map
++ Enable Princess to properly consider standing still and firing for infantry units that have "move OR fire" rules (field guns, etc)
++ Issue #351: Dropping units cannot attack ground targets
++ Feature: Capital missile bearings only launch
++ Issue #362: Tooltips are a lot less sticky
++ Issue #819: Leap check for LAM passing over terrain.
++ Issue #818: Fighter stuck on atmospheric map with no movement options
++ Data: New Sprites
+
 v0.43.5 (2017-12-17 11:00 UTC)
 + Tech Progression Fixes.
 + PR #686: Large Craft Advanced Point Defense Rules from Stratops p96
