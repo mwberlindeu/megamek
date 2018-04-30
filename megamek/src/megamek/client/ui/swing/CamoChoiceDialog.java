@@ -286,7 +286,9 @@ public class CamoChoiceDialog extends JDialog implements TreeSelectionListener {
                 entity.setCamoFileName(filename);
             }
         } else {
-            player.setColorIndex(colorIndex);
+            if (colorIndex >= 0) {
+                player.setColorIndex(colorIndex);
+            }
             player.setCamoCategory(category);
             player.setCamoFileName(filename);
             sourceButton.setIcon(generateIcon(category, filename));
@@ -345,7 +347,12 @@ public class CamoChoiceDialog extends JDialog implements TreeSelectionListener {
         player = p;
 
         category = player.getCamoCategory();
-        filename = player.getCamoFileName();
+        if (category.equals(IPlayer.NO_CAMO) && (null != entity) && (p.getColorIndex() >= 0)) {
+            filename = (String) camoModel.getValueAt(
+                    p.getColorIndex(), 0);
+        } else {
+            filename = player.getCamoFileName();
+        }
         if (sourceButton != null) {
             sourceButton.setIcon(generateIcon(category, filename));
         }

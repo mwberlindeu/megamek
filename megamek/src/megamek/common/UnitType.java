@@ -110,7 +110,7 @@ public class UnitType {
      * @return True or false
      */
     public static boolean isVTOL(Entity e) {
-    	return e.getEntityType() == Entity.ETYPE_VTOL;
+        return e.getEntityType() == Entity.ETYPE_VTOL;
     }
     
     /**
