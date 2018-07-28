@@ -1951,7 +1951,7 @@ public class ChatLounge extends AbstractPhaseDisplay
                     unitClass += Messages.getString("ChatLounge.6"); //$NON-NLS-1$
                 }
             }
-            Integer piloting = new Integer(entity.getCrew().getPiloting());
+            Integer piloting = Integer.valueOf(entity.getCrew().getPiloting());
             String advantages = (crewAdvCount > 0 ? " <" + crewAdvCount //$NON-NLS-1$
                     + Messages.getString("ChatLounge.advs") : ""); //$NON-NLS-1$
             String maneiDomini = (isManeiDomini ? Messages.getString("ChatLounge.md") : ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1967,7 +1967,7 @@ public class ChatLounge extends AbstractPhaseDisplay
                     new Object[] { entity.getOwner().getName(), gunnery, piloting, advantages, maneiDomini, unitClass,
                             posQuirks, negQuirks, offBoard, deployRound, hidden });
         } else {
-            Integer piloting = new Integer(entity.getCrew().getPiloting());
+            Integer piloting = Integer.valueOf(entity.getCrew().getPiloting());
             String advantages = (crewAdvCount > 0 ? " <" + crewAdvCount //$NON-NLS-1$
                     + Messages.getString("ChatLounge.advs") : ""); //$NON-NLS-1$ //$NON-NLS-2$
             String maneiDomini = (isManeiDomini ? Messages.getString("ChatLounge.md") : ""); //$NON-NLS-1$ //$NON-NLS-2$
@@ -1975,7 +1975,7 @@ public class ChatLounge extends AbstractPhaseDisplay
                     + Messages.getString("ChatLounge.pquirk") : ""); //$NON-NLS-1$ //$NON-NLS-2$
             String negQuirks = (negQuirkCount > 0 ? " <" + negQuirkCount //$NON-NLS-1$
                     + Messages.getString("ChatLounge.nquirk") : ""); //$NON-NLS-1$
-            Integer battleValue = new Integer(entity.calculateBattleValue());
+            Integer battleValue = Integer.valueOf(entity.calculateBattleValue());
             String hidden = ((entity.isHidden()) ? Messages.getString("ChatLounge.hidden") : ""); //$NON-NLS-1$
             String offBoard = ((entity.isOffBoard()) ? Messages.getString("ChatLounge.deploysOffBoard") : ""); //$NON-NLS-1$ //$NON-NLS-2$
             String deployRound = ((entity.getDeployRound() > 0) ? Messages.getString("ChatLounge.deploysAfterRound") //$NON-NLS-1$
@@ -3723,7 +3723,7 @@ public class ChatLounge extends AbstractPhaseDisplay
 
                         Double count = counts.get(entityType);
                         if (count == null) {
-                            count = new Double(0);
+                            count = Double.valueOf(0);
                         }
                         count = count + unitSize;
                         counts.put(entityType, count);

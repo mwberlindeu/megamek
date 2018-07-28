@@ -738,7 +738,7 @@ public class Crew implements Serializable {
         s = s.trim();
         int index = s.indexOf(" ");
         if (index == -1) {
-            return new Boolean(true);
+            return Boolean.TRUE;
         }
         String t = s.substring(index + 1, s.length());
         Object result;

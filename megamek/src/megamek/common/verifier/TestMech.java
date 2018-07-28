@@ -536,8 +536,8 @@ public class TestMech extends TestEntity {
         }
 
         allocation.addElement(mounted);
-        allocation.addElement(new Integer(criticals));
-        allocation.addElement(new Integer(count));
+        allocation.addElement(Integer.valueOf(criticals));
+        allocation.addElement(Integer.valueOf(count));
         return false;
     }
 
@@ -603,7 +603,7 @@ public class TestMech extends TestEntity {
                         .integralHeatSinkCapacity(mech.hasCompactHeatSinks()))
                         && (countInternalHeatSinks != ((Mech) entity)
                                 .heatSinks()) && !entity.isOmni())) {
-            heatSinks.addElement(new Integer(countInternalHeatSinks));
+            heatSinks.addElement(Integer.valueOf(countInternalHeatSinks));
         }
         return legal;
     }

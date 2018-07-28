@@ -5042,19 +5042,19 @@ public class Compute {
             if (ent.isEnemyOf(ae) && ent.hasGhostTargets(true)
                 && (entPos != null)) {
                 vEnemyGTCoords.addElement(entPos);
-                vEnemyGTRanges.addElement(new Integer(ent.getECMRange()));
-                vEnemyGTId.addElement(new Integer(ent.getId()));
+                vEnemyGTRanges.addElement(Integer.valueOf(ent.getECMRange()));
+                vEnemyGTId.addElement(Integer.valueOf(ent.getId()));
                 hEnemyGTCrossed.put(ent.getId(), false);
                 hEnemyGTMods.put(ent.getId(), ent.getGhostTargetRollMoS());
             }
             if (ent.isEnemyOf(ae) && ent.hasActiveECCM() && (entPos != null)) {
                 vEnemyECCMCoords.addElement(entPos);
-                vEnemyECCMRanges.addElement(new Integer(ent.getECMRange()));
+                vEnemyECCMRanges.addElement(Integer.valueOf(ent.getECMRange()));
                 vEnemyECCMStrengths.add(ent.getECCMStrength());
             }
             if (!ent.isEnemyOf(ae) && ent.hasActiveECM() && (entPos != null)) {
                 vFriendlyECMCoords.addElement(entPos);
-                vFriendlyECMRanges.addElement(new Integer(ent.getECMRange()));
+                vFriendlyECMRanges.addElement(Integer.valueOf(ent.getECMRange()));
                 vFriendlyECMStrengths.add(ent.getECMStrength());
             }
 
@@ -5063,8 +5063,8 @@ public class Compute {
                 if (other.isEnemyOf(ae) && other.hasGhostTargets(true)
                     && (entPos != null)) {
                     vEnemyGTCoords.addElement(entPos);
-                    vEnemyGTRanges.addElement(new Integer(other.getECMRange()));
-                    vEnemyGTId.addElement(new Integer(ent.getId()));
+                    vEnemyGTRanges.addElement(Integer.valueOf(other.getECMRange()));
+                    vEnemyGTId.addElement(Integer.valueOf(ent.getId()));
                     hEnemyGTCrossed.put(ent.getId(), false);
                     hEnemyGTMods.put(ent.getId(), ent.getGhostTargetRollMoS());
                 }
@@ -5072,14 +5072,14 @@ public class Compute {
                     && (entPos != null)) {
                     vEnemyECCMCoords.addElement(entPos);
                     vEnemyECCMRanges
-                            .addElement(new Integer(other.getECMRange()));
+                            .addElement(Integer.valueOf(other.getECMRange()));
                     vEnemyECCMStrengths.add(ent.getECCMStrength());
                 }
                 if (!other.isEnemyOf(ae) && ent.hasActiveECM()
                     && (entPos != null)) {
                     vFriendlyECMCoords.addElement(entPos);
                     vFriendlyECMRanges
-                            .addElement(new Integer(ent.getECMRange()));
+                            .addElement(Integer.valueOf(ent.getECMRange()));
                     vFriendlyECMStrengths.add(ent.getECMStrength());
                 }
             }

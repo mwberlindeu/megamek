@@ -1302,7 +1302,7 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                         Messages.getString("MovementDisplay.areYouSure"), //$NON-NLS-1$
                         Messages.getString(
                                 "MovementDisplay.ConfirmMoveRoll",
-                                new Object[] { new Integer(ce().getMASCTarget()) }), //$NON-NLS-1$
+                                new Object[] { Integer.valueOf(ce().getMASCTarget()) }), //$NON-NLS-1$
                         true);
                 nag.setVisible(true);
                 if (nag.getAnswer()) {
@@ -1841,7 +1841,7 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                                     Messages.getString(
                                             "MovementDisplay.RamDialog.message", new Object[] { //$NON-NLS-1$
                                                     toHit.getValueAsString(),
-                                                    new Double(
+                                                    Double.valueOf(
                                                             Compute.oddsAbove(
                                                                     toHit.getValue(),
                                                                     ce().getCrew()
@@ -1849,9 +1849,9 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                                                                             .booleanOption(
                                                                                     OptionsConstants.PILOT_APTITUDE_PILOTING))),
                                                     toHit.getDesc(),
-                                                    new Integer(toDefender),
+                                                    Integer.valueOf(toDefender),
                                                     toHit.getTableDesc(),
-                                                    new Integer(toAttacker) }))) {
+                                                    Integer.valueOf(toAttacker) }))) {
                         // if they answer yes, charge the target.
                         cmd.getLastStep().setTarget(target);
                         ready();
@@ -1932,13 +1932,13 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                             .doYesNoDialog(Messages.getString(title, new Object[] { target.getDisplayName() }), //$NON-NLS-1$
                                     Messages.getString(msg,new Object[] {//$NON-NLS-1$
                                             toHit.getValueAsString(),
-                                            new Double(
+                                            Double.valueOf(
                                                     Compute.oddsAbove(toHit
                                                             .getValue())),
                                             toHit.getDesc(),
                                             toDefender,
                                             toHit.getTableDesc(),
-                                            new Integer(toAttacker) }))) {
+                                            Integer.valueOf(toAttacker) }))) {
                         // if they answer yes, charge the target.
                         cmd.getLastStep().setTarget(target);
                         ready();
@@ -1981,18 +1981,18 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
                                     Messages.getString(
                                             "MovementDisplay.DFADialog.message", new Object[] {//$NON-NLS-1$
                                                     toHit.getValueAsString(),
-                                                    new Double(
+                                                    Double.valueOf(
                                                             Compute.oddsAbove(toHit
                                                                     .getValue())),
                                                     toHit.getDesc(),
-                                                    new Integer(
+                                                    Integer.valueOf(
                                                             DfaAttackAction
                                                                     .getDamageFor(
                                                                             ce,
                                                                             (target instanceof Infantry)
                                                                                     && !(target instanceof BattleArmor))),
                                                     toHit.getTableDesc(),
-                                                    new Integer(
+                                                    Integer.valueOf(
                                                             DfaAttackAction
                                                                     .getDamageTakenBy(ce)) }))) {
                         // if they answer yes, DFA the target
@@ -4375,7 +4375,7 @@ public class MovementDisplay extends StatusBarPhaseDisplay {
             String msg = Messages.getString(
                     "MovementDisplay.ClearMinefieldDialog.message", //$NON-NLS-1$
                     new Object[] {
-                    new Integer(clear), new Integer(boom) });
+                    Integer.valueOf(clear), Integer.valueOf(boom) });
             if ((null != mf) && clientgui.doYesNoDialog(title, msg)) {
                 cmd.addStep(MoveStepType.CLEAR_MINEFIELD, mf);
                 ready();
