@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.security.AccessController;
@@ -25,6 +26,8 @@ import java.security.PrivilegedExceptionAction;
 import java.util.Locale;
 import java.util.PropertyResourceBundle;
 import java.util.ResourceBundle;
+
+import megamek.common.logging.DefaultMmLogger;
 
 /**
  * Created with IntelliJ IDEA.
@@ -39,7 +42,8 @@ import java.util.ResourceBundle;
  * The actual overridden class has been copied here with the encoding change from the borrowed coded added.
  */
 public class EncodeControl extends ResourceBundle.Control {
-    public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
+    @Override
+	public ResourceBundle newBundle(String baseName, Locale locale, String format, ClassLoader loader, boolean reload)
             throws IllegalAccessException, InstantiationException, IOException {
         String bundleName = this.toBundleName(baseName, locale);
         Object bundle = null;
@@ -50,10 +54,14 @@ public class EncodeControl extends ResourceBundle.Control {
                     throw new ClassCastException(resourceName.getName() + " cannot be cast to ResourceBundle");
                 }
 
-                bundle = (ResourceBundle) resourceName.newInstance();
+				bundle = (ResourceBundle) resourceName.getConstructor().newInstance();
             } catch (ClassNotFoundException var19) {
                 throw (IOException) var19.getException();
-            }
+			} catch (IllegalArgumentException | InvocationTargetException | NoSuchMethodException
+					| SecurityException e) {
+				DefaultMmLogger.getInstance().error(getClass(), "newBundle(String,Locale,String,ClassLoader,boolean)", e);
+				throw new InstantiationException();
+			}
         } else {
             if (!format.equals("java.properties")) {
                 throw new IllegalArgumentException("unknown format: " + format);
@@ -70,7 +78,8 @@ public class EncodeControl extends ResourceBundle.Control {
 
             try {
                 stream = (InputStream) AccessController.doPrivileged(new PrivilegedExceptionAction<InputStream>() {
-                    public InputStream run() throws IOException {
+                    @Override
+					public InputStream run() throws IOException {
                         InputStream is = null;
                         if (reloadFlag) {
                             URL url = classLoader.getResource(resourceName1);
