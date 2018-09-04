@@ -13,6 +13,16 @@
  */
 package megamek.client.bot.princess;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.JUnit4;
+import org.mockito.Mockito;
+
 import megamek.client.bot.princess.PathRanker.PathRankerType;
 import megamek.common.BattleArmor;
 import megamek.common.BipedMech;
@@ -30,19 +40,7 @@ import megamek.common.PilotingRollData;
 import megamek.common.Tank;
 import megamek.common.logging.FakeLogger;
 import megamek.common.logging.LogLevel;
-
 import megamek.common.logging.MMLogger;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
-import org.mockito.Mockito;
-
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 /**
  * @author Deric "Netzilla" Page (deric dot page at usa dot net)

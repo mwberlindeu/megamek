@@ -78,7 +78,6 @@ public class MechView {
     private boolean isSquadron;
     private boolean isSmallCraft;
     private boolean isJumpship;
-    private boolean isSpaceStation;
 
     private List<ViewElement> sHead = new ArrayList<>();
     private List<ViewElement> sBasic = new ArrayList<>();
@@ -136,7 +135,6 @@ public class MechView {
         isSquadron = entity instanceof FighterSquadron;
         isSmallCraft = entity instanceof SmallCraft;
         isJumpship = entity instanceof Jumpship;
-        isSpaceStation = entity instanceof SpaceStation;
 
         sLoadout.addAll(getWeapons(showDetail));
         sLoadout.add(new SingleLine());
