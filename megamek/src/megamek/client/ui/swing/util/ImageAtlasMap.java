@@ -26,6 +26,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.thoughtworks.xstream.XStream;
+import com.thoughtworks.xstream.converters.basic.StringConverter;
+import com.thoughtworks.xstream.converters.collections.MapConverter;
 
 import megamek.common.Configuration;
 
@@ -104,7 +106,7 @@ public class ImageAtlasMap {
      * @return
      */
     public boolean writeToFile() {
-        XStream xstream = new XStream();
+        XStream xstream = createXStream();
         try (Writer writer = new OutputStreamWriter(new FileOutputStream(Configuration.imageFileAtlasMapFile()),
                 Charset.forName("UTF-8"));) {
             xstream.toXML(imgFileToAtlasMap, writer);
@@ -127,7 +129,7 @@ public class ImageAtlasMap {
 
         ImageAtlasMap map;
         try (InputStream is = new FileInputStream(Configuration.imageFileAtlasMapFile())) {
-            XStream xstream = new XStream();
+            XStream xstream = createXStream();
             map = new ImageAtlasMap((Map<String, String>) xstream.fromXML(is));
         } catch (FileNotFoundException e) {
             map = null;
@@ -138,5 +140,21 @@ public class ImageAtlasMap {
         }
         return map;
     }
+
+    /**
+     * Creates an XStream object that uses the {@link MapConverter} instead of reflection in order
+     * to work on Java 11+
+     * 
+     * @return An XStream instance 
+     */
+	private static XStream createXStream() {
+		XStream xstream = new XStream() {
+        	@Override
+        	protected void setupConverters() {}
+        };
+        xstream.registerConverter(new MapConverter(xstream.getMapper()), XStream.PRIORITY_NORMAL);
+        xstream.registerConverter(new StringConverter(), XStream.PRIORITY_NORMAL);
+		return xstream;
+	}
 
 }
