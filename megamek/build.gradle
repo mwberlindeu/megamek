@@ -278,7 +278,6 @@ createExe {
     outfile = 'MegaMek.exe'
     icon = "${projectDir}/data/images/misc/megamek.ico"
     def inifile = outfile.replace('.exe', '.l4j.ini')
-    inputs.file  jar
     outputs.file "${buildDir}/launch4j/${outfile}"
     outputs.file "${buildDir}/launch4j/${inifile}"
     doLast {
