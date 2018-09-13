@@ -1046,6 +1046,9 @@ public class WeaponType extends EquipmentType {
             case (CLASS_CAPITAL_MD):
                 return EquipmentType.get("Capital Mass Driver Bay");
             case (CLASS_CAPITAL_MISSILE):
+                if (subCapital) {
+                    return EquipmentType.get("Sub-Capital Missile Bay");
+                }
                 return EquipmentType.get("Capital Missile Bay");
             case (CLASS_TELE_MISSILE):
                 return EquipmentType.get("Tele-Operated Capital Missile Bay");
@@ -1722,7 +1725,7 @@ public class WeaponType extends EquipmentType {
         EquipmentType.addType(new InfantryPistolTKEnforcerAutoPistolWeapon());
         EquipmentType.addType(new InfantryPistolTranqGunWeapon());
         EquipmentType.addType(new InfantryPistolWhiteDwarfLaserPistolWeapon());
-        EquipmentType.addType(new InfantryPistoMachinePistolSPEC7AWeapon());
+        EquipmentType.addType(new InfantryPistolSMGGHTSpec7aWeapon());
         EquipmentType.addType(new InfantryPistolVintageWeapon());
 
         //Clan Pistols - Commented out can be considered Obsolete
