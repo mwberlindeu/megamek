@@ -352,6 +352,11 @@ public abstract class Mech extends Entity {
         }
     }
 
+    @Override
+    public int getUnitType() {
+        return UnitType.MEK;
+    }
+
     /**
      * @return if this mech cannot stand up from hulldown
      */
@@ -5266,7 +5271,7 @@ public abstract class Mech extends Entity {
             cockpitCost = 200000;
         }
         if (hasEiCockpit()
-                && ((null != getCrew()) && getCrew().getOptions().booleanOption(OptionsConstants.UNOFF_EI_IMPLANT))) {
+                && ((null != getCrew()) && hasAbility(OptionsConstants.UNOFF_EI_IMPLANT))) {
             cockpitCost = 400000;
         }
         costs[i++] = cockpitCost;
@@ -5562,15 +5567,15 @@ public abstract class Mech extends Entity {
         }
 
         // VDNI bonus?
-        if (getCrew().getOptions().booleanOption(OptionsConstants.MD_VDNI)
-                && !getCrew().getOptions().booleanOption(OptionsConstants.MD_BVDNI)) {
+        if (hasAbility(OptionsConstants.MD_VDNI)
+                && !hasAbility(OptionsConstants.MD_BVDNI)) {
             roll.addModifier(-1, "VDNI");
         }
 
         // Small/torso-mounted cockpit penalty?
         if ((getCockpitType() == Mech.COCKPIT_SMALL)
-                && (!getCrew().getOptions().booleanOption(OptionsConstants.MD_BVDNI)
-                && !getCrew().getOptions().booleanOption(OptionsConstants.UNOFF_SMALL_PILOT))) {
+                && (!hasAbility(OptionsConstants.MD_BVDNI)
+                && !hasAbility(OptionsConstants.UNOFF_SMALL_PILOT))) {
             roll.addModifier(1, "Small Cockpit");
         } else if (getCockpitType() == Mech.COCKPIT_TORSO_MOUNTED) {
             roll.addModifier(1, "Torso-Mounted Cockpit");
@@ -5594,7 +5599,7 @@ public abstract class Mech extends Entity {
             }
         }
 
-        if (hasQuirk(OptionsConstants.QUIRK_NEG_CRAMPED_COCKPIT) && !getCrew().getOptions().booleanOption(OptionsConstants.UNOFF_SMALL_PILOT)) {
+        if (hasQuirk(OptionsConstants.QUIRK_NEG_CRAMPED_COCKPIT) && !hasAbility(OptionsConstants.UNOFF_SMALL_PILOT)) {
             roll.addModifier(1, "cramped cockpit");
         }
 
